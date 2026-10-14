@@ -1,5 +1,27 @@
 # 3.3 V Motion Sensor PCB — ICM-42670-P
 
+## Project Information
+
+**Designer / Author:** Jhostin ("Jay")  
+**GitHub:** @JS2028EE  
+**Project type:** First custom PCB / 6-axis IMU breakout board  
+**EDA tool:** EasyEDA Pro  
+**Target interface:** 3.3 V I2C  
+**Main sensor:** TDK InvenSense ICM-42670-P  
+**Board:** 2-layer FR-4 prototype  
+**Revision status:** Revision 1 engineering prototype — hardware validation pending physical testing  
+**Hardware license:** CERN-OHL-P-2.0
+
+This repository is intended to document not only the finished circuit, but the engineering reasoning behind the component choices, calculations, PCB layout, manufacturing decisions, test plan, limitations, and future revisions.
+
+Detailed supporting documents:
+
+- [Design rationale and why every component was chosen](docs/DESIGN_RATIONALE.md)
+- [Known limitations, risks, and validation requirements](docs/LIMITATIONS.md)
+- [Official sources and documentation](docs/SOURCES.md)
+- [CERN Open Hardware Licence Version 2 - Permissive](LICENSE)
+
+
 This repository documents my **first custom PCB circuit**, designed in EasyEDA as a compact 3.3 V motion-sensor / IMU module based on the **TDK InvenSense ICM-42670-P**.
 
 The board is intended to connect directly to a 3.3 V microcontroller such as an ESP32 over I²C and provide 3-axis acceleration, 3-axis gyroscope data, an interrupt output, and external I²C address control.
@@ -636,3 +658,102 @@ This design is a very low-power 3.3 V custom IMU module. The 10 kΩ resistors op
 The calculated conservative board load is only about **1.54 mA / 5.08 mW** under the specific high-current condition analyzed above. Normal operating consumption should be lower.
 
 This is the first revision of the project and should be treated as an engineering prototype. Final validation occurs only after physical assembly, power-on testing, I²C communication, and real sensor measurements.
+
+
+---
+
+# Design Rationale
+
+Every component on this first revision has a specific purpose. The complete explanation is in [docs/DESIGN_RATIONALE.md](docs/DESIGN_RATIONALE.md).
+
+In summary:
+
+| Part | Why it is on the board |
+|---|---|
+| **U1 — ICM-42670-P** | Modern low-power 6-axis IMU providing the accelerometer and gyroscope functions |
+| **R1 — 10 kOhm** | Pulls I2C SCL HIGH because the bus uses open-drain signaling |
+| **R2 — 10 kOhm** | Pulls I2C SDA HIGH because the bus uses open-drain signaling |
+| **R3 — 10 kOhm** | Holds AD0 LOW by default so the I2C address is defined rather than floating |
+| **C1 — 100 nF** | High-frequency VDD decoupling close to U1 |
+| **C2 — 2.2 uF** | Larger local VDD energy storage / decoupling |
+| **C3 — 10 nF** | VDDIO decoupling |
+| **H1 — 1x6 header** | Simple 3.3 V, GND, I2C, interrupt, and address interface |
+
+The design intentionally avoids unnecessary features in Revision 1 so the first manufactured board can validate the sensor, power network, I2C interface, footprint, assembly process, and PCB layout before a more advanced Revision 2 is attempted.
+
+# Documentation and Sources
+
+The design is based primarily on official TDK InvenSense documentation for the ICM-42670-P.
+
+Primary references include:
+
+- **TDK ICM-42670-P product page:** https://www.invensense.tdk.com/en-us/products/6-axis/icm-42670-p
+- **TDK ICM-42670-P datasheet (DS-000451):** https://invensense.tdk.com/wp-content/uploads/2021/07/ds-000451_icm-42670-p-datasheet.pdf
+- **EasyEDA Pro documentation:** https://prodocs.easyeda.com/
+- **JLCPCB BOM requirements:** https://jlcpcb.com/help/article/bill-of-materials-for-pcb-assembly
+- **JLCPCB Pick & Place / CPL requirements:** https://jlcpcb.com/help/article/pick-place-file-for-pcb-assembly
+- **CERN Open Hardware Licence information:** https://ohwr.org/licences/
+
+A more complete source list and explanation of what each reference was used for is available in [docs/SOURCES.md](docs/SOURCES.md).
+
+# Limitations and Prototype Status
+
+This board is **not yet considered a validated production design**. A clean schematic DRC, PCB DRC, Gerber preview, and assembly preview reduce design risk but do not prove that the physical board will function.
+
+Important limitations include:
+
+- 3.3 V input only; there is no onboard regulator for 5 V
+- no reverse-polarity protection
+- no dedicated ESD/TVS protection
+- no logic-level shifting
+- 10 kOhm I2C pull-ups are intended as an initial value for a short, low-capacitance bus
+- the ICM-42670-P uses hidden LGA solder joints
+- MEMS measurements can be affected by PCB flex, mounting pressure, vibration, temperature, and assembly stress
+- current calculations are engineering estimates, not absolute maximum ratings
+- final success must be proven by physical power-on and sensor testing
+
+See [docs/LIMITATIONS.md](docs/LIMITATIONS.md) for the full list.
+
+# Revision 1 Validation Goals
+
+Revision 1 will be considered successful when it passes all of the following:
+
+1. No short between 3V3 and GND before power-up.
+2. Stable regulated 3.3 V supply.
+3. Reasonable measured current with no abnormal heating.
+4. I2C device detected at the expected address.
+5. Device identification register matches the ICM-42670-P.
+6. Accelerometer measurements react correctly to orientation and movement.
+7. Gyroscope measurements react correctly to rotation.
+8. INT output can be verified if interrupt functionality is enabled.
+9. Multiple power cycles complete successfully.
+10. No intermittent communication caused by soldering or layout faults.
+
+# Future Revision Ideas
+
+Possible Revision 2 improvements include:
+
+- optional 4.7 kOhm I2C pull-up footprints or configurable pull-ups
+- dedicated ESD protection on the external connector
+- improved mounting-hole treatment and mechanical isolation
+- selectable AD0 jumper
+- additional INT2 breakout
+- optional SPI interface
+- power/status LED
+- onboard regulator for a wider input-voltage range
+- smaller board dimensions after Revision 1 is proven
+- test pads for 3V3, GND, SDA, SCL, and interrupt signals
+
+# License
+
+The original hardware design materials and project documentation in this repository are released under the **CERN Open Hardware Licence Version 2 - Permissive (CERN-OHL-P-2.0)**. See [LICENSE](LICENSE).
+
+This licence was selected because this is an open hardware project and the permissive CERN OHL is specifically designed for hardware design source and physical products made from that source.
+
+Third-party items such as manufacturer datasheets, component models, trademarks, logos, vendor documentation, and referenced external material remain under their original owners' terms and are **not** relicensed by this repository.
+
+If software or firmware is added later, it may be given a separate software-specific licence.
+
+# Author
+
+Designed and documented by **Jhostin ("Jay") / @JS2028EE** as a first custom PCB project focused on embedded systems, PCB design, circuit analysis, and practical electronics engineering.
